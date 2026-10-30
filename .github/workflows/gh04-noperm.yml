@@ -1,0 +1,11 @@
+# GH-04: a caller that does not grant id-token: write. The template's attest job asks for it,
+# so the run is expected to fail at startup.
+name: gh04-noperm
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  template:
+    uses: ./.github/workflows/attest.yml
+    with:
+      label: noperm

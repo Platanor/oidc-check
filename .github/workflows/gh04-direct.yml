@@ -1,0 +1,11 @@
+# GH-04: a workflow that does not grant id-token: write gets no token.
+name: gh04-direct
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  direct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: .github/scripts/token.sh fetch direct "platanor:v1:steal:9.9.9:x"

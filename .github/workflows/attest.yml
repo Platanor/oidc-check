@@ -1,0 +1,68 @@
+# The build template under test (v3 §12): no inputs; only the attest job may get a token.
+# GH-03: claims of a reusable workflow called by SHA. GH-04: the build job gets no token.
+name: attest-template
+on:
+  workflow_call:
+    inputs:
+      label:
+        description: Only names the artifact; never reaches the build.
+        type: string
+        default: run
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Platanor/oidc-check
+          path: template
+      - name: Build
+        run: |
+          mkdir -p fw
+          printf 'firmware of %s at %s\n' "$GITHUB_REPOSITORY" "$GITHUB_SHA" > fw/fw.bin
+          sha256sum fw/fw.bin
+      - name: GH-04, a build job tries to get a token
+        run: |
+          cd template
+          .github/scripts/token.sh fetch build-job "platanor:v1:steal:9.9.9:$(printf '00%.0s' {1..32})"
+          .github/scripts/token.sh seal ../out-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fw-${{ inputs.label }}
+          path: fw
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tokens-${{ inputs.label }}-build
+          path: out-build
+          retention-days: 3
+
+  attest:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Platanor/oidc-check
+          path: template
+      - uses: actions/download-artifact@v4
+        with:
+          name: fw-${{ inputs.label }}
+          path: fw
+      - name: Receipt
+        run: |
+          digest=$(sha256sum fw/fw.bin | cut -d' ' -f1)
+          if [ "$GITHUB_REF_TYPE" = tag ]; then version="${GITHUB_REF_NAME#v}"; else version="0.0.0-run.$GITHUB_RUN_ID"; fi
+          cd template
+          .github/scripts/token.sh fetch receipt "platanor:v1:oidc-check:$version:$digest"
+          .github/scripts/token.sh seal ../out-attest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tokens-${{ inputs.label }}-attest
+          path: out-attest
+          retention-days: 3

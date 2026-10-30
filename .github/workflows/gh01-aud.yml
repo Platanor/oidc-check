@@ -1,0 +1,29 @@
+# GH-01: `aud` of arbitrary format and length comes back exactly as requested.
+name: gh01-aud
+on: workflow_dispatch
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  aud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Request tokens
+        run: |
+          t=.github/scripts/token.sh
+          d=$(printf 'ab%.0s' {1..32})   # 64 hex characters
+          $t fetch product  "platanor:v1:acme-industrial-gateway-controller-rev-c:12.34.567-rc.12:$d"
+          $t fetch hsm      "platanor-hsm:v1:nrf54l15tag-nrf54l15-cpuapp-ns:1.4.0:$d"
+          $t fetch semver   "platanor:v1:acme-sensor:1.2.3+build.7:$d"
+          $t fetch comma    "platanor:v1:a,b:1.0.0:$d"
+          $t fetch space    "platanor:v1:a b:1.0.0:$d"
+          for n in 256 512 1024 2048 4096 8192; do
+            $t fetch "len$n" "platanor:v1:$(head -c $((n - 12)) /dev/zero | tr '\0' x)"
+          done
+      - run: .github/scripts/token.sh seal out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tokens-gh01
+          path: out
+          retention-days: 3
