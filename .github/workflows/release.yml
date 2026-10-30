@@ -1,5 +1,6 @@
 # GH-02, GH-03, GH-08: the caller of the template, run on every tag push.
-# `local` calls the template by path; `pinned` calls it by commit SHA, as a product repo would.
+# `local` calls the template by path; `pinned` calls it by commit SHA; `external` calls the copy
+# in Platanor/oidc-check-template by SHA, as a product repo calls its separate template repo.
 name: release
 on:
   push:
@@ -17,3 +18,7 @@ jobs:
     uses: Platanor/oidc-check/.github/workflows/attest.yml@17c536a775d8cdc597b32b4cbd39c395b94e31c0
     with:
       label: pinned
+  external:
+    uses: Platanor/oidc-check-template/.github/workflows/attest.yml@35062cccd7b642cb496ba1386c8b2f3ee53c54df
+    with:
+      label: external

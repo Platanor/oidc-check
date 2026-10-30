@@ -1,0 +1,27 @@
+# GH-09: an artifact attestation of a public repository goes to the public Sigstore
+# (Fulcio certificate + Rekor entry). The bundle is analysed offline (v3 §9.5).
+name: gh09-attest
+on: workflow_dispatch
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: |
+          mkdir -p fw
+          printf 'firmware of %s at %s, GH-09\n' "$GITHUB_REPOSITORY" "$GITHUB_SHA" > fw/fw.bin
+          sha256sum fw/fw.bin
+      - uses: actions/attest-build-provenance@v2
+        id: attest
+        with:
+          subject-path: fw/fw.bin
+      - run: echo "bundle ${{ steps.attest.outputs.bundle-path }}, attestation ${{ steps.attest.outputs.attestation-url }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gh09-fw
+          path: fw
+          retention-days: 3
