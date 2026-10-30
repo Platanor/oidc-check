@@ -1,0 +1,18 @@
+# GH-04: a template job without its own `permissions` inherits the caller's grant.
+name: inherit-template
+on: workflow_call
+jobs:
+  build-no-permissions-block:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Platanor/oidc-check
+      - run: |
+          .github/scripts/token.sh fetch build-inherit "platanor:v1:steal:9.9.9:x"
+          .github/scripts/token.sh seal out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tokens-inherit
+          path: out
+          retention-days: 3

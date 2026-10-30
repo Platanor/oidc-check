@@ -1,0 +1,9 @@
+# GH-04: the caller grants id-token: write; the called template's job declares no permissions.
+name: gh04-inherit
+on: workflow_dispatch
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  template:
+    uses: ./.github/workflows/inherit.yml
