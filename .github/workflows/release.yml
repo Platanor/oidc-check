@@ -1,0 +1,19 @@
+# GH-02, GH-03, GH-08: the caller of the template, run on every tag push.
+# `local` calls the template by path; `pinned` calls it by commit SHA, as a product repo would.
+name: release
+on:
+  push:
+    tags: ['**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  local:
+    uses: ./.github/workflows/attest.yml
+    with:
+      label: local
+  pinned:
+    uses: Platanor/oidc-check/.github/workflows/attest.yml@17c536a775d8cdc597b32b4cbd39c395b94e31c0
+    with:
+      label: pinned
